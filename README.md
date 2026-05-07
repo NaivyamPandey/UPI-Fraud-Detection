@@ -108,6 +108,13 @@ npm run dev
 
 ---
 
+## 👨‍💻 Authors
+
+- Naivyam Pandey  
+- Pragati Dwivedi 
+- Maneesh Maurya  
+- Kriti Gaur
+
 ## 📝 License
 This project is licensed under the ISC License.
 
