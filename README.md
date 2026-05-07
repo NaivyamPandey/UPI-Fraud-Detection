@@ -108,6 +108,30 @@ npm run dev
 
 ---
 
+## 📸 Screenshots
+
+### 🔹 Home Page
+![Home Page](Project_Screenshots/Home_page.png)
+
+### 🔹 Login Page
+![Login Page](Project_Screenshots/Login_page.png)
+
+### 🔹 Signup Page
+![Signup Page](Project_Screenshots/Signup_page.png)
+
+### 🔹 User Dashboard
+![Dashboard](Project_Screenshots/User_dashboard.png)
+
+### 🔹 Transaction Check
+![Transaction](Project_Screenshots/Check_transaction.png)
+
+### 🔹 User History
+![History](Project_Screenshots/User_history.png)
+
+### 🔹 Working Flow
+![Workflow](Project_Screenshots/Working.png)
+
+
 ## 👨‍💻 Authors
 
 - Naivyam Pandey  
