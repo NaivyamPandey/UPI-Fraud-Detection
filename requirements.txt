@@ -1,0 +1,20 @@
+# =======================================================
+# PYTHON DEPENDENCIES (For ML Prediction Engine)
+# =======================================================
+# Install using: pip install -r requirements.txt
+
+numpy>=1.24.0
+scikit-learn>=1.2.0
+tensorflow>=2.13.0
+joblib>=1.3.0
+pandas>=2.0.0
+
+# =======================================================
+# NODE.JS DEPENDENCIES (For Backend & Frontend)
+# =======================================================
+# Note: requirements.txt is for Python. 
+# For Node.js/React, please use these commands:
+#
+# Backend: cd root -> npm install
+# Frontend: cd upi_modern_v2 -> npm install
+# =======================================================

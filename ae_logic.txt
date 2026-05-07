@@ -1,0 +1,216 @@
+## 4. AUTOENCODER
+---CELL---
+# 4. Build Architecture
+input_layer = Input(shape=(input_dim,))
+
+# Encoder
+encoded = Dense(8, activation='relu')(input_layer)
+encoded = Dense(2, activation='relu')(encoded) # Tight bottleneck for 4 features
+
+# Decoder
+decoded = Dense(8, activation='relu')(encoded)
+decoded = Dense(input_dim, activation='sigmoid')(decoded)
+
+autoencoder = Model(inputs=input_layer, outputs=decoded)
+autoencoder.compile(optimizer='adam', loss='mse')
+---CELL---
+# 5. Train
+
+print("Training Autoencoder on selected features...")
+autoencoder.fit(X_train_normal, X_train_normal, epochs=50, batch_size=32, verbose=0)
+---CELL---
+# 6. Detect Anomalies
+
+predictions = autoencoder.predict(X_test_ae)
+mse = np.mean(np.power(X_test_ae - predictions, 2), axis=1)
+
+---CELL---
+# 7. Thresholding (Top 10% error = Fraud)
+
+threshold = np.percentile(mse, 90) 
+y_pred_ae = (mse > threshold).astype(int)
+---CELL---
+# 8. Evaluate
+
+print("\n--- Autoencoder with Feature Selection Results ---")
+print(classification_report(y_test, y_pred_ae))
+---CELL---
+# Confusion Matrix 
+
+cm_ae = confusion_matrix(y_test, y_pred_ae)
+
+plt.figure(figsize=(6,4))
+sns.heatmap(cm_ae, annot=True, fmt='d', cmap='coolwarm',
+            xticklabels=['Normal','Fraud'],
+            yticklabels=['Normal','Fraud'])
+
+plt.title('Autoencoder Confusion Matrix')
+plt.xlabel('Predicted')
+plt.ylabel('Actual')
+
+plt.show()
+
+
+# ROC Curve 
+
+roc_auc_ae = roc_auc_score(y_test, mse)
+
+print("Autoencoder ROC AUC Score:", roc_auc_ae)
+fpr_ae, tpr_ae, thresholds = roc_curve(y_test, mse)
+plt.figure(figsize=(6,4))
+
+plt.plot(fpr_ae,
+         tpr_ae,
+         color='green',
+         label=f'Autoencoder (AUC = {roc_auc_ae:.2f})')
+
+plt.plot([0,1],[0,1], linestyle='--')
+
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+
+plt.title('ROC Curve - Autoencoder')
+
+plt.legend()
+
+plt.show()
+---CELL---
+## 6. HYBRID MODEL (Autoencoder and RandomForest)
+---CELL---
+# Random Forest Probabilities
+
+rf_prob = rf_model.predict_proba(X_test[selected_features])[:,1]
+
+from sklearn.preprocessing import MinMaxScaler
+
+scaler = MinMaxScaler()
+
+ae_score = scaler.fit_transform(mse.reshape(-1,1)).flatten()
+
+# Hybrid Score
+
+hybrid_rf_ae_score = 0.6 * rf_prob + 0.4 * ae_score
+
+threshold = 0.4
+
+y_pred_rf_ae = (hybrid_rf_ae_score > threshold).astype(int)
+
+from sklearn.metrics import classification_report, accuracy_score, roc_auc_score
+
+print("Hybrid Random Forest + Autoencoder")
+
+print(classification_report(y_test, y_pred_rf_ae))
+
+print("Accuracy:", accuracy_score(y_test, y_pred_rf_ae))
+
+print("ROC-AUC:", roc_auc_score(y_test, hybrid_rf_ae_score))
+---CELL---
+from sklearn.metrics import classification_report, roc_auc_score, accuracy_score
+import pandas as pd
+
+# List of models and their names to compare
+trained_models = {
+    "Random Forest": rf_model,
+    "Logistic Regression": lr_model,
+    "Decision tree": dt_model,
+    # "Gradient Boost": gb_model
+}
+
+comparison_data = []
+
+for name, model in trained_models.items():
+    
+    # Predictions
+    y_pred = model.predict(X_test)
+    y_prob = model.predict_proba(X_test)[:,1]
+    
+    report = classification_report(y_test, y_pred, output_dict=True)
+    
+    # Store metrics for both classes
+    for label in ['0', '1']:
+        comparison_data.append({
+            "Algorithm": name,
+            "Class": "Normal (0)" if label == '0' else "Fraud (1)",
+            "Precision": report[label]['precision'],
+            "Recall": report[label]['recall'],
+            "F1-Score": report[label]['f1-score'],
+            "Accuracy": accuracy_score(y_test, y_pred),
+            "ROC-AUC": roc_auc_score(y_test, y_prob)
+        })
+
+
+
+
+# Adding Isolation Forest
+
+report_iso = classification_report(y_test, y_pred_iso, output_dict=True)
+
+for label in ['0', '1']:
+    comparison_data.append({
+        "Algorithm": "Isolation Forest",
+        "Class": "Normal (0)" if label == '0' else "Fraud (1)",
+        "Precision": report_iso[label]['precision'],
+        "Recall": report_iso[label]['recall'],
+        "F1-Score": report_iso[label]['f1-score'],
+        "Accuracy": accuracy_score(y_test, y_pred_iso),
+        "ROC-AUC": roc_auc_score(y_test, if_scores)
+    })
+
+
+# Adding Autoencoder
+
+report_ae = classification_report(y_test, y_pred_ae, output_dict=True)
+
+for label in ['0', '1']:
+    comparison_data.append({
+        "Algorithm": "Autoencoder",
+        "Class": "Normal (0)" if label == '0' else "Fraud (1)",
+        "Precision": report_ae[label]['precision'],
+        "Recall": report_ae[label]['recall'],
+        "F1-Score": report_ae[label]['f1-score'],
+        "Accuracy": accuracy_score(y_test, y_pred_ae),
+        "ROC-AUC": roc_auc_score(y_test, mse)
+    })
+
+
+report_hybrid = classification_report(y_test, y_pred_rf_ae, output_dict=True)
+
+for label in ['0', '1']:
+    comparison_data.append({
+        "Algorithm": "Hybrid (RF + Autoencoder)",
+        "Class": "Normal (0)" if label == '0' else "Fraud (1)",
+        "Precision": report_hybrid[label]['precision'],
+        "Recall": report_hybrid[label]['recall'],
+        "F1-Score": report_hybrid[label]['f1-score'],
+        "Accuracy": accuracy_score(y_test, y_pred_rf_ae),
+        "ROC-AUC": roc_auc_score(y_test, hybrid_rf_ae_score)
+    })
+
+
+
+
+
+# Create DataFrame
+comparison_df = pd.DataFrame(comparison_data)
+
+# Keep only Fraud class
+comparison_df = comparison_df[comparison_df["Class"] == "Fraud (1)"]
+
+# Pivot Table
+final_table = comparison_df.pivot(index="Algorithm", columns="Class")
+
+#Display Table 
+display(
+    final_table.style
+    .set_properties(**{
+        'text-align': 'center',
+        'padding': '8px'
+    })
+    .set_table_styles([
+        {'selector': 'th', 
+         'props': [('padding', '10px'),
+                   ('text-align', 'center')]},
+        {'selector': 'td', 
+         'props': [('padding', '10px')]}
+    ])
+)

@@ -1,0 +1,35 @@
+# ==========================================
+# UPI Fraud Detection - Master Requirements
+# ==========================================
+
+# --- 1. PYTHON (ML/PREDICTION ENGINE) ---
+# Location: ./Backend ML
+# Install via: pip install -r requirements.txt
+numpy>=1.24.0
+scikit-learn>=1.2.0
+tensorflow>=2.13.0
+joblib>=1.3.0
+pandas>=2.0.0
+
+# --- 2. BACKEND (NODE.JS + EXPRESS) ---
+# Location: ./ (Root Directory)
+# Install via: npm install
+express
+cors
+mongoose
+python-shell
+bcryptjs
+jsonwebtoken
+
+# --- 3. FRONTEND (REACT + VITE) ---
+# Location: ./upi_modern_v2
+# Install via: npm install
+react
+react-dom
+react-router-dom
+lucide-react
+
+# --- 4. SYSTEM TOOLS ---
+- Node.js (v16+)
+- Python (v3.9+)
+- MongoDB (Running on localhost:27017)

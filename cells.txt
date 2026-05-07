@@ -1,0 +1,347 @@
+# Random Forest Probabilities
+
+rf_prob = rf_model.predict_proba(X_test[selected_features])[:,1]
+
+from sklearn.preprocessing import MinMaxScaler
+
+scaler = MinMaxScaler()
+
+ae_score = scaler.fit_transform(mse.reshape(-1,1)).flatten()
+
+# Hybrid Score
+
+hybrid_rf_ae_score = 0.6 * rf_prob + 0.4 * ae_score
+
+threshold = 0.4
+
+y_pred_rf_ae = (hybrid_rf_ae_score > threshold).astype(int)
+
+from sklearn.metrics import classification_report, accuracy_score, roc_auc_score
+
+print("Hybrid Random Forest + Autoencoder")
+
+print(classification_report(y_test, y_pred_rf_ae))
+
+print("Accuracy:", accuracy_score(y_test, y_pred_rf_ae))
+
+print("ROC-AUC:", roc_auc_score(y_test, hybrid_rf_ae_score))
+
+---CELL---
+
+cm_hybrid = confusion_matrix(y_test, y_pred)
+
+plt.figure(figsize=(5,4))
+sns.heatmap(cm_hybrid, annot=True, fmt='d')
+
+plt.title("Confusion Matrix - Hybrid Model")
+plt.xlabel("Predicted")
+plt.ylabel("Actual")
+
+plt.show()
+
+
+
+# ROC CURVE 
+
+fpr_hybrid, tpr_hybrid, threshold = roc_curve(y_test, y_prob)
+
+plt.figure(figsize=(6,4))
+plt.plot(fpr_hybrid, tpr_hybrid)
+
+plt.title("ROC Curve - Hybrid Model")
+plt.xlabel("False Positive Rate")
+plt.ylabel("True Positive Rate")
+
+plt.show()
+
+
+---CELL---
+
+from sklearn.metrics import classification_report, roc_auc_score, accuracy_score
+import pandas as pd
+
+# List of models and their names to compare
+trained_models = {
+    "Random Forest": rf_model,
+    "Logistic Regression": lr_model,
+    "Decision tree": dt_model,
+    # "Gradient Boost": gb_model
+}
+
+comparison_data = []
+
+for name, model in trained_models.items():
+    
+    # Predictions
+    y_pred = model.predict(X_test)
+    y_prob = model.predict_proba(X_test)[:,1]
+    
+    report = classification_report(y_test, y_pred, output_dict=True)
+    
+    # Store metrics for both classes
+    for label in ['0', '1']:
+        comparison_data.append({
+            "Algorithm": name,
+            "Class": "Normal (0)" if label == '0' else "Fraud (1)",
+            "Precision": report[label]['precision'],
+            "Recall": report[label]['recall'],
+            "F1-Score": report[label]['f1-score'],
+            "Accuracy": accuracy_score(y_test, y_pred),
+            "ROC-AUC": roc_auc_score(y_test, y_prob)
+        })
+
+
+
+
+# Adding Isolation Forest
+
+report_iso = classification_report(y_test, y_pred_iso, output_dict=True)
+
+for label in ['0', '1']:
+    comparison_data.append({
+        "Algorithm": "Isolation Forest",
+        "Class": "Normal (0)" if label == '0' else "Fraud (1)",
+        "Precision": report_iso[label]['precision'],
+        "Recall": report_iso[label]['recall'],
+        "F1-Score": report_iso[label]['f1-score'],
+        "Accuracy": accuracy_score(y_test, y_pred_iso),
+        "ROC-AUC": roc_auc_score(y_test, if_scores)
+    })
+
+
+# Adding Autoencoder
+
+report_ae = classification_report(y_test, y_pred_ae, output_dict=True)
+
+for label in ['0', '1']:
+    comparison_data.append({
+        "Algorithm": "Autoencoder",
+        "Class": "Normal (0)" if label == '0' else "Fraud (1)",
+        "Precision": report_ae[label]['precision'],
+        "Recall": report_ae[label]['recall'],
+        "F1-Score": report_ae[label]['f1-score'],
+        "Accuracy": accuracy_score(y_test, y_pred_ae),
+        "ROC-AUC": roc_auc_score(y_test, mse)
+    })
+
+
+report_hybrid = classification_report(y_test, y_pred_rf_ae, output_dict=True)
+
+for label in ['0', '1']:
+    comparison_data.append({
+        "Algorithm": "Hybrid (RF + Autoencoder)",
+        "Class": "Normal (0)" if label == '0' else "Fraud (1)",
+        "Precision": report_hybrid[label]['precision'],
+        "Recall": report_hybrid[label]['recall'],
+        "F1-Score": report_hybrid[label]['f1-score'],
+        "Accuracy": accuracy_score(y_test, y_pred_rf_ae),
+        "ROC-AUC": roc_auc_score(y_test, hybrid_rf_ae_score)
+    })
+
+
+
+
+
+# Create DataFrame
+comparison_df = pd.DataFrame(comparison_data)
+
+# Keep only Fraud class
+comparison_df = comparison_df[comparison_df["Class"] == "Fraud (1)"]
+
+# Pivot Table
+final_table = comparison_df.pivot(index="Algorithm", columns="Class")
+
+#Display Table 
+display(
+    final_table.style
+    .set_properties(**{
+        'text-align': 'center',
+        'padding': '8px'
+    })
+    .set_table_styles([
+        {'selector': 'th', 
+         'props': [('padding', '10px'),
+                   ('text-align', 'center')]},
+        {'selector': 'td', 
+         'props': [('padding', '10px')]}
+    ])
+)
+
+---CELL---
+
+# Create Final Table
+comparison_df = pd.DataFrame(comparison_data)
+
+comparison_df = comparison_df[comparison_df["Class"] == "Fraud (1)"]
+
+
+# ==============================
+# GRAPHS START FROM HERE
+# ==============================
+
+sns.set_style("whitegrid")
+
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+sns.set_style("whitegrid")
+plt.rcParams['figure.figsize'] = (12,6)
+plt.rcParams['font.size'] = 12
+
+
+
+---CELL---
+
+plt.figure()
+
+ax = sns.barplot(
+    data=comparison_df,
+    x="Algorithm",
+    y="Accuracy",
+    palette="Blues_d",
+    errorbar=None 
+)
+
+plt.title("Accuracy Comparison of All Algorithms", fontsize=14, weight='bold')
+plt.xticks(rotation=20)
+plt.ylim(0,1.05)
+
+for p in ax.patches:
+    ax.annotate(f'{p.get_height():.2f}',
+                (p.get_x() + p.get_width()/2., p.get_height()),
+                ha='center', va='bottom')
+
+plt.show()
+
+---CELL---
+
+plt.figure()
+
+ax = sns.barplot(
+    data=comparison_df,
+    x="Algorithm",
+    y="Precision",
+    palette="Purples_d",
+    errorbar=None 
+)
+
+plt.title("Precision Comparison of All Algorithms", fontsize=14, weight='bold')
+plt.xticks(rotation=20)
+plt.ylim(0,1.05)
+
+for p in ax.patches:
+    ax.annotate(f'{p.get_height():.2f}',
+                (p.get_x() + p.get_width()/2., p.get_height()),
+                ha='center', va='bottom')
+
+plt.show()
+
+---CELL---
+
+plt.figure()
+
+ax = sns.barplot(
+    data=comparison_df,
+    x="Algorithm",
+    y="Recall",
+    palette="Greens_d",
+    errorbar=None 
+)
+
+plt.title("Recall Comparison of All Algorithms", fontsize=14, weight='bold')
+plt.xticks(rotation=20)
+plt.ylim(0,1.05)
+
+for p in ax.patches:
+    ax.annotate(f'{p.get_height():.2f}',
+                (p.get_x() + p.get_width()/2., p.get_height()),
+                ha='center', va='bottom')
+
+plt.show()
+
+---CELL---
+
+plt.figure()
+
+ax = sns.barplot(
+    data=comparison_df,
+    x="Algorithm",
+    y="F1-Score",
+    palette="Oranges_d",
+    errorbar=None 
+)
+
+plt.title("F1 Score Comparison of All Algorithms", fontsize=14, weight='bold')
+plt.xticks(rotation=20)
+plt.ylim(0,1.05)
+
+for p in ax.patches:
+    ax.annotate(f'{p.get_height():.2f}',
+                (p.get_x() + p.get_width()/2., p.get_height()),
+                ha='center', va='bottom')
+
+plt.show()
+
+---CELL---
+
+plt.figure()
+
+ax = sns.barplot(
+    data=comparison_df,
+    x="Algorithm",
+    y="ROC-AUC",
+    palette="Set2"
+)
+
+plt.title("ROC-AUC Comparison of All Algorithms", fontsize=14, weight='bold')
+plt.xticks(rotation=20)
+plt.ylim(0,1.05)
+
+for p in ax.patches:
+    ax.annotate(f'{p.get_height():.2f}',
+                (p.get_x() + p.get_width()/2., p.get_height()),
+                ha='center', va='bottom')
+
+plt.show()
+
+---CELL---
+
+fraud_df = comparison_df[comparison_df["Class"] == "Fraud (1)"]
+fraud_melted = fraud_df.melt(
+    id_vars="Algorithm",
+    value_vars=["Precision", "Recall", "F1-Score", "Accuracy", "ROC-AUC"],
+    var_name="Metric",
+    value_name="Score"
+)
+plt.figure(figsize=(14,6))
+
+ax = sns.barplot(
+    data=fraud_melted,
+    x="Algorithm",
+    y="Score",
+    hue="Metric",
+    palette="Set2",
+    errorbar=None
+)
+
+plt.title("Fraud Detection Performance Comparison (All Algorithms)", 
+          fontsize=14, weight='bold')
+
+plt.ylabel("Score")
+plt.xlabel("Algorithms")
+
+plt.ylim(0,1.05)
+plt.xticks(rotation=20)
+
+plt.legend(title="Evaluation Metrics")
+
+# Add values on bars
+for p in ax.patches:
+    height = p.get_height()
+    if height > 0:
+        ax.annotate(f'{height:.2f}',
+                    (p.get_x() + p.get_width()/2., height),
+                    ha='center', va='bottom',
+                    fontsize=8)
+
+plt.show()
