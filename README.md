@@ -108,6 +108,21 @@ npm run dev
 
 ---
 
+## ⚙️ Methodology
+
+The system follows an end-to-end machine learning pipeline to detect fraudulent UPI transactions:
+
+- Data preprocessing and feature engineering
+- Model training using machine learning algorithms
+- Evaluation using performance metrics
+- Integration with backend API for real-time prediction
+
+---
+
+## 🔄 System Workflow
+
+![Methodology](Models_and_Graphs/Methodology.png)
+
 ## 📸 Screenshots
 
 ### 🔹 Home Page
@@ -130,6 +145,23 @@ npm run dev
 
 ### 🔹 Working Flow
 ![Workflow](Project_Screenshots/Working.png)
+
+## 📊 Model Performance & Analysis
+
+### 🔹 Confusion Matrix
+Represents how well the model classifies fraudulent and legitimate transactions.
+
+![Confusion Matrix](Models_and_Graphs/Confusion_matrix.png)
+
+### 🔹 Metrics Comparison
+Comparison of models based on accuracy, precision, recall, and F1-score.
+
+![Metrics](Models_and_Graphs/Metrics_comparion.png)
+
+### 🔹 Model Comparison
+Overall comparison of different models used in the system.
+
+![Model Comparison](Models_and_Graphs/Model_comparison.png)
 
 
 ## 👨‍💻 Authors
